@@ -1,0 +1,14 @@
+# ignore IDE files
+.idea
+
+# ignore generated files
+__pycache__
+
+# ignore testcase files
+testcases
+
+# ignore text files
+*.txt
+
+#ignore images
+*.png

@@ -14,7 +14,7 @@ def get_poi_path(path_file):
         with open(path_file) as file:
             for line in file:
                 coordinates = line.split()
-                path.append((coordinates[0], coordinates[1]))
+                path.append((int(coordinates[0]), int(coordinates[1])))
         return path
     except Exception as e:
         print(f"Error reading path file: {e}")
@@ -30,8 +30,8 @@ def get_elevations(elevation_file):
     try:
         with open(elevation_file) as file:
             for line in file:
-                elevations = line.split()
-                elevations.extend(elevations[:-5])
+                values = line.split()
+                elevations.append([float(value) for value in values][:-5])
         return elevations
     except Exception as e:
         print(f"Error reading elevation file: {e}")

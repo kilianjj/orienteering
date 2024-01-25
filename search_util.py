@@ -3,67 +3,52 @@ Searching logic and related functions
 Author: Kilian Jakstis
 """
 
+import heapq
+
+# max coordinate values
 MAX_X = 395
 MAX_Y = 500
-
-######################## test version functions, work on ones below ####################################
-
-# def dumb_search(start, end):
-#     path = []
-#     max_y = max(start[1], end[1])
-#     min_y = min(start[1], end[1])
-#     max_x = max(start[0], end[0])
-#     min_x = min(start[0], end[0])
-#     for x in range(min_x, max_x):
-#         path.append((x, min_y))
-#     for y in range(min_y, max_y):
-#         path.append((max_x, y))
-#     return path
-#
-# def get_route(terrain, elevations, poi_path):
-#     if len(poi_path) < 2:
-#         print("POI path not long enough")
-#         return
-#     route = []
-#     start = poi_path.pop(0)
-#     end = poi_path.pop(0)
-#     while True:
-#         between_points = dumb_search(start, end)
-#         route.extend(between_points)
-#         if len(poi_path) == 0:
-#             break
-#         start = end
-#         end = poi_path.pop(0)
-#     return route
-
-########################## real functions below ##############################
+# RGB values for the various terrain types
+OPEN_LAND = (248, 148, 18)
+ROUGH_MEADOW = (255, 192, 0)
+EASY_FOREST = (255, 255, 255)
+SLOW_FOREST = (2, 208, 60)
+WALK_FOREST = (2, 136, 40)
+IMPASSIBLE_VEGETATION = (5, 73, 24)
+WATER = (0, 0, 255)
+PAVED_ROAD = (71, 51, 3)
+FOOTPATH = (0, 0, 0)
+OUT_OF_BOUNDS = (205, 0, 101)
+PATH = (200, 100, 230)
 
 # this one is good, make alterations to search function and add relevant ones
 def get_route(terrain, elevations, poi_path):
     if len(poi_path) < 2:
         print("POI path not long enough")
         return
+    total_distance = 0
     route = []
     start = poi_path.pop(0)
     end = poi_path.pop(0)
     while True:
-        between_points = search(start, end, terrain, elevations)
+        between_points, between_distance = search(start, end, terrain, elevations)
         route.extend(between_points)
-        print(route)
+        total_distance += between_distance
         if len(poi_path) == 0:
             break
         start = end
         end = poi_path.pop(0)
-    return route
+    print(f"Total Distance: {total_distance}m")
+    return set(route)
 
 # plug neighbors into this for cost function
 def distance(coordinate, target, elevations):
     x = (coordinate[0] - target[0]) ** 2
     y = (coordinate[1] - target[1]) ** 2
-    z = (elevations[coordinate[0]][coordinate[1]] - elevations[target[0]][target][1]) ** 2
+    z = (elevations[coordinate[0]][coordinate[1]] - elevations[target[0]][target[1]]) ** 2
     return (x + y + z) ** (1/3)
 
-# is this fine? 3d distance from current point to target
+# is this fine? 3d distance from current point to target, might want to pass in terrains
 def heuristic(coordinate, target, elevations):
     return distance(coordinate, target, elevations)
 
@@ -78,30 +63,38 @@ def get_neighbors(coordinate):
             neighbors.append((new_col, new_row))
     return neighbors
 
-# need to incorporate A* stuff
-def search(start, end, terrain, elevations):
-    visited = set()
-    backtrack = {}
-    to_visit = [start]
-    parent = None
-    while len(to_visit) != 0:
-        current = to_visit.pop(0)
-        if current in visited:  # skip over words that have already been seen
-            continue
-        if parent is None:
-            backtrack[current] = None  # mark start word's parent as None
-            parent = False
-        if current == end:
-            break
-        new_points = get_neighbors(current)
-        for point in new_points:
-            if point not in backtrack:
-                backtrack[point] = current
-        to_visit.extend(new_points)
-        visited.add(current)
+# backtrack to get path after A*
+def construct_path(visited_nodes, start, end):
     path = []
     head = end
-    while head is not None:  # backtrack until head is None to generate path
+    while head is not start:  # backtrack until head is None to generate path
         path.append(head)
-        head = backtrack.get(head)
+        head = visited_nodes.get(head)
+    path.append(start)
     return path[::-1]
+
+# A* stuff
+def search(start, end, terrain, elevations):
+    # todo: incorporate terrain data, distance, heuristic, etc
+    # todo: distance calculations need to update to account for grid size, direction, etc
+    visited = set()
+    to_visit = []   # priority queue for new nodes to visit
+    g_scores = {start: 0}
+    f_scores = {start: heuristic(start, end, elevations)}
+    parents = {}
+    heapq.heappush(to_visit, (0, start))
+    while to_visit:
+        current = heapq.heappop(to_visit)[1]
+        if current == end:
+            return construct_path(parents, start, end), g_scores.get(end)
+        visited.add(current)
+        for neighbor in get_neighbors(current):
+            if neighbor in visited:
+                continue
+            g_score = distance(current, neighbor, elevations) + g_scores.get(current)
+            if neighbor not in g_scores or g_score < g_scores[neighbor]:
+                g_scores[neighbor] = g_score
+                f_scores[neighbor] = g_score + heuristic(neighbor, end, elevations)
+                parents[neighbor] = current
+                heapq.heappush(to_visit, (f_scores[neighbor], neighbor))
+    return None, 0

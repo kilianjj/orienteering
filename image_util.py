@@ -6,19 +6,6 @@ Author: Kilian Jakstis
 from PIL import Image
 import numpy as np
 
-# RGB values for the various terrain types
-OPEN_LAND = (248, 148, 18)
-ROUGH_MEADOW = (255, 192, 0)
-EASY_FOREST = (255, 255, 255)
-SLOW_FOREST = (2, 208, 60)
-WALK_FOREST = (2, 136, 40)
-IMPASSIBLE_VEGETATION = (5, 73, 24)
-WATER = (0, 0, 255)
-PAVED_ROAD = (71, 51, 3)
-FOOTPATH = (0, 0, 0)
-OUT_OF_BOUNDS = (205, 0, 101)
-PATH = (200, 100, 230)
-
 def read_image(path):
     """
     Read in terrain image file

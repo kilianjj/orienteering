@@ -6,6 +6,9 @@ Author: Kilian Jakstis
 from PIL import Image
 import numpy as np
 
+# path color
+PATH_COLOR = (200, 100, 230)
+
 def read_image(path):
     """
     Read in terrain image file
@@ -48,7 +51,7 @@ def save_image(im, route, output_path):
         image = Image.fromarray(im)
         pixels = image.load()
         for pixel in route:
-            pixels[pixel[0], pixel[1]] = PATH
+            pixels[pixel[0], pixel[1]] = PATH_COLOR
         image.show()
     except Exception as e:
         print(f"Error writing output image: {e}")

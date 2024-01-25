@@ -54,12 +54,13 @@ def heuristic(coordinate, target, elevations):
 
 # get neighbors
 def get_neighbors(coordinate):
+    # Todo: not gonna lie i think the coordinates are formatted as (y, x) but its working so ima keep it
     neighbors = []
     rows, cols = MAX_Y, MAX_X
     directions = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
     for y, x in directions:
         new_row, new_col = coordinate[1] + y, coordinate[0] + x
-        if 0 <= new_row < rows and 0 <= new_col < cols:
+        if 0 <= new_row < rows and 0 <= new_col < cols and new_row < MAX_X and new_col < MAX_Y:
             neighbors.append((new_col, new_row))
     return neighbors
 

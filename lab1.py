@@ -25,6 +25,7 @@ if __name__ == '__main__':
     elevations = file_util.get_elevations(args.elevation_file)
     map_array = image_util.read_image(args.terrain_image)
     if poi_path is not None and elevations is not None and map_array is not None:
+        print(len(elevations), len(elevations[0]))
         # compute the path and print distance
         route = search_util.get_route(map_array, elevations, poi_path)
         if route is None:

@@ -8,18 +8,28 @@ import heapq
 # max coordinate values
 MAX_X = 395
 MAX_Y = 500
-# RGB values for the various terrain types
-OPEN_LAND = (248, 148, 18)
-ROUGH_MEADOW = (255, 192, 0)
-EASY_FOREST = (255, 255, 255)
-SLOW_FOREST = (2, 208, 60)
-WALK_FOREST = (2, 136, 40)
-IMPASSIBLE_VEGETATION = (5, 73, 24)
-WATER = (0, 0, 255)
-PAVED_ROAD = (71, 51, 3)
-FOOTPATH = (0, 0, 0)
-OUT_OF_BOUNDS = (205, 0, 101)
-PATH = (200, 100, 230)
+# grid sizes
+GRID_WIDTH = 10.29
+GRID_HEIGHT = 7.55
+# RGB values for the various terrain types and the associated heuristic cost value
+terrain_types = {
+    (248, 148, 18): 1,     # OPEN_LAND
+    (255, 192, 0): 10,     # ROUGH_MEADOW
+    (255, 255, 255): 1,    # EASY_FOREST
+    (2, 208, 60): 2,       # SLOW_FOREST
+    (2, 136, 40): 5,       # WALK_FOREST
+    (71, 51, 3): 1,        # PAVED_ROAD
+    (0, 0, 0): 1,          # FOOTPATH
+    (205, 0, 101): None,   # OUT_OF_BOUNDS
+    (5, 73, 24): None,     # IMPASSIBLE_VEGETATION
+    (0, 0, 255): None      # WATER
+}
+
+def compare(one, two):
+    for x in range(3):
+        if one[x] != two[x]:
+            return False
+    return True
 
 # this one is good, make alterations to search function and add relevant ones
 def get_route(terrain, elevations, poi_path):
@@ -32,6 +42,9 @@ def get_route(terrain, elevations, poi_path):
     end = poi_path.pop(0)
     while True:
         between_points, between_distance = search(start, end, terrain, elevations)
+        print(between_points)
+        if between_points is None:
+            continue
         route.extend(between_points)
         total_distance += between_distance
         if len(poi_path) == 0:
@@ -42,15 +55,23 @@ def get_route(terrain, elevations, poi_path):
     return set(route)
 
 # plug neighbors into this for cost function
-def distance(coordinate, target, elevations):
+def distance(coordinate, target, elevations, heuristic_bool):
     x = (coordinate[0] - target[0]) ** 2
     y = (coordinate[1] - target[1]) ** 2
     z = (elevations[coordinate[0]][coordinate[1]] - elevations[target[0]][target[1]]) ** 2
-    return (x + y + z) ** (1/3)
+    d = (x + y + z) ** (1/3)
+    if heuristic_bool:
+        return d
+    if x == 0:
+        return GRID_HEIGHT * d
+    elif y == 0:
+        return GRID_WIDTH * d
+    else:
+        return (((GRID_HEIGHT ** 2) + (GRID_WIDTH ** 2)) ** (1/2)) * d
 
 # is this fine? 3d distance from current point to target, might want to pass in terrains
 def heuristic(coordinate, target, elevations):
-    return distance(coordinate, target, elevations)
+    return distance(coordinate, target, elevations, True)
 
 # get neighbors
 def get_neighbors(coordinate):
@@ -92,10 +113,17 @@ def search(start, end, terrain, elevations):
         for neighbor in get_neighbors(current):
             if neighbor in visited:
                 continue
-            g_score = distance(current, neighbor, elevations) + g_scores.get(current)
+            # terrain_type = (terrain[neighbor[0]][neighbor[1]][0],
+            #                 terrain[neighbor[0]][neighbor[1]][1],
+            #                 terrain[neighbor[0]][neighbor[1]][2])
+            # time_factor = terrain_types.get(terrain_type)       # todo: check indexing
+            # if time_factor is None:
+            #     continue
+            g_score = distance(current, neighbor, elevations, False) + g_scores.get(current)
             if neighbor not in g_scores or g_score < g_scores[neighbor]:
                 g_scores[neighbor] = g_score
-                f_scores[neighbor] = g_score + heuristic(neighbor, end, elevations)
+                f_scores[neighbor] = g_score + heuristic(neighbor, end, elevations) # * time_factor
                 parents[neighbor] = current
+                # print(time_factor)
                 heapq.heappush(to_visit, (f_scores[neighbor], neighbor))
     return None, 0

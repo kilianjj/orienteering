@@ -25,12 +25,6 @@ terrain_types = {
     (0, 0, 255): None      # WATER
 }
 
-def compare(one, two):
-    for x in range(3):
-        if one[x] != two[x]:
-            return False
-    return True
-
 # this one is good, make alterations to search function and add relevant ones
 def get_route(terrain, elevations, poi_path):
     if len(poi_path) < 2:
@@ -39,18 +33,19 @@ def get_route(terrain, elevations, poi_path):
     total_distance = 0
     route = []
     start = poi_path.pop(0)
-    end = poi_path.pop(0)
+    target = poi_path.pop(0)
     while True:
-        between_points, between_distance = search(start, end, terrain, elevations)
-        print(between_points)
+        between_points, between_distance = search(start, target, terrain, elevations)
+        print(target)
+        # print(between_points)
         if between_points is None:
             continue
         route.extend(between_points)
         total_distance += between_distance
         if len(poi_path) == 0:
             break
-        start = end
-        end = poi_path.pop(0)
+        start = target
+        target = poi_path.pop(0)
     print(f"Total Distance: {total_distance}m")
     return set(route)
 
@@ -58,7 +53,7 @@ def get_route(terrain, elevations, poi_path):
 def distance(coordinate, target, elevations, heuristic_bool):
     x = (coordinate[0] - target[0]) ** 2
     y = (coordinate[1] - target[1]) ** 2
-    z = (elevations[coordinate[0]][coordinate[1]] - elevations[target[0]][target[1]]) ** 2
+    z = (elevations[coordinate[1]][coordinate[0]] - elevations[target[1]][target[0]]) ** 2      # indexing y then x
     d = (x + y + z) ** (1/3)
     if heuristic_bool:
         return d
@@ -80,7 +75,7 @@ def get_neighbors(coordinate):
     rows, cols = MAX_Y, MAX_X
     directions = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
     for y, x in directions:
-        new_row, new_col = coordinate[1] + y, coordinate[0] + x
+        new_row, new_col = coordinate[1] + x, coordinate[0] + y
         if 0 <= new_row < rows and 0 <= new_col < cols and new_row < MAX_X and new_col < MAX_Y:
             neighbors.append((new_col, new_row))
     return neighbors
@@ -113,17 +108,16 @@ def search(start, end, terrain, elevations):
         for neighbor in get_neighbors(current):
             if neighbor in visited:
                 continue
-            # terrain_type = (terrain[neighbor[0]][neighbor[1]][0],
-            #                 terrain[neighbor[0]][neighbor[1]][1],
-            #                 terrain[neighbor[0]][neighbor[1]][2])
-            # time_factor = terrain_types.get(terrain_type)       # todo: check indexing
-            # if time_factor is None:
-            #     continue
+            terrain_type = (terrain[neighbor[1]][neighbor[0]][0],
+                            terrain[neighbor[1]][neighbor[0]][1],
+                            terrain[neighbor[1]][neighbor[0]][2])
+            time_factor = terrain_types.get(terrain_type)       # todo: check indexing
+            if time_factor is None:
+                continue
             g_score = distance(current, neighbor, elevations, False) + g_scores.get(current)
             if neighbor not in g_scores or g_score < g_scores[neighbor]:
                 g_scores[neighbor] = g_score
-                f_scores[neighbor] = g_score + heuristic(neighbor, end, elevations) # * time_factor
+                f_scores[neighbor] = g_score + heuristic(neighbor, end, elevations) * time_factor   # comment out time factor if issues
                 parents[neighbor] = current
-                # print(time_factor)
                 heapq.heappush(to_visit, (f_scores[neighbor], neighbor))
     return None, 0

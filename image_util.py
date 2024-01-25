@@ -49,6 +49,7 @@ def save_image(im, route, output_path):
     """
     try:
         image = Image.fromarray(im)
+        image = image.convert('RGB')
         pixels = image.load()
         for pixel in route:
             pixels[pixel[0], pixel[1]] = PATH_COLOR

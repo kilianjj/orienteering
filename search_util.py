@@ -34,6 +34,7 @@ def get_route(terrain, elevations, poi_path):
     route = []
     start = poi_path.pop(0)
     target = poi_path.pop(0)
+    # todo: convert to for
     while True:
         between_points, between_distance = search(start, target, terrain, elevations)
         print(target)

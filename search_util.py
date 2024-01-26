@@ -1,6 +1,7 @@
 """
 Searching logic and related functions
 Author: Kilian Jakstis
+*** elevations and terrain image indexed by y then x
 """
 
 import heapq
@@ -12,46 +13,64 @@ MAX_Y = 500
 GRID_WIDTH = 10.29
 GRID_HEIGHT = 7.55
 # RGB values for the various terrain types and the associated heuristic cost value
+# terrain_types = {
+#     (248, 148, 18): 1,     # OPEN_LAND
+#     (255, 192, 0): 10,     # ROUGH_MEADOW
+#     (255, 255, 255): 1,    # EASY_FOREST
+#     (2, 208, 60): 2,       # SLOW_FOREST
+#     (2, 136, 40): 5,       # WALK_FOREST
+#     (71, 51, 3): 1,        # PAVED_ROAD
+#     (0, 0, 0): 1,          # FOOTPATH
+#     (205, 0, 101): None,   # OUT_OF_BOUNDS
+#     (5, 73, 24): None,     # IMPASSIBLE_VEGETATION
+#     (0, 0, 255): None      # WATER
+# }
 terrain_types = {
-    (248, 148, 18): 1,     # OPEN_LAND
-    (255, 192, 0): 10,     # ROUGH_MEADOW
-    (255, 255, 255): 1,    # EASY_FOREST
-    (2, 208, 60): 2,       # SLOW_FOREST
-    (2, 136, 40): 5,       # WALK_FOREST
+    (248, 148, 18): 3,     # OPEN_LAND
+    (255, 192, 0): 7,     # ROUGH_MEADOW
+    (255, 255, 255): 4,    # EASY_FOREST
+    (2, 208, 60): 5,       # SLOW_FOREST
+    (2, 136, 40): 6,       # WALK_FOREST
     (71, 51, 3): 1,        # PAVED_ROAD
-    (0, 0, 0): 1,          # FOOTPATH
+    (0, 0, 0): 2,          # FOOTPATH
     (205, 0, 101): None,   # OUT_OF_BOUNDS
     (5, 73, 24): None,     # IMPASSIBLE_VEGETATION
     (0, 0, 255): None      # WATER
 }
 
-# this one is good, make alterations to search function and add relevant ones
 def get_route(terrain, elevations, poi_path):
+    """
+    Get the full route by constructing smaller routes between pairs of points in the specified order
+    :param terrain: RGB array of terrain image
+    :param elevations: elevation array
+    :param poi_path: list of POIs in the order they must be visited
+    :return: full route (as a list of coordinate tuples) in order of those visited
+    """
     if len(poi_path) < 2:
         print("POI path not long enough")
         return
     total_distance = 0
     route = []
-    start = poi_path.pop(0)
-    target = poi_path.pop(0)
-    # todo: convert to for
-    while True:
-        between_points, between_distance = search(start, target, terrain, elevations)
-        print(target)
+    for i in range(len(poi_path) - 1):
+        between_points, between_distance = search(poi_path[i], poi_path[i+1], terrain, elevations)
         # print(between_points)
         if between_points is None:
+            print("Path not found for this section")
             continue
         route.extend(between_points)
         total_distance += between_distance
-        if len(poi_path) == 0:
-            break
-        start = target
-        target = poi_path.pop(0)
     print(f"Total Distance: {total_distance}m")
     return set(route)
 
-# plug neighbors into this for cost function
 def distance(coordinate, target, elevations, heuristic_bool):
+    """
+    Calculates the distance between 2 points
+    :param coordinate: current coordinate
+    :param target: target coordinate
+    :param elevations: elevation values
+    :param heuristic_bool: true if this is being used to calculate heuristic (heuristic is unit-less, cost is in meters)
+    :return: float distance between the two points
+    """
     x = (coordinate[0] - target[0]) ** 2
     y = (coordinate[1] - target[1]) ** 2
     z = (elevations[coordinate[1]][coordinate[0]] - elevations[target[1]][target[0]]) ** 2      # indexing y then x
@@ -65,13 +84,22 @@ def distance(coordinate, target, elevations, heuristic_bool):
     else:
         return (((GRID_HEIGHT ** 2) + (GRID_WIDTH ** 2)) ** (1/2)) * d
 
-# is this fine? 3d distance from current point to target, might want to pass in terrains
 def heuristic(coordinate, target, elevations):
+    """
+    Heuristic function for guiding A* search
+    :param coordinate: current point
+    :param target: goal point
+    :param elevations: elevation values
+    :return: estimated cost to target by using 3d Euclidean distance
+    """
     return distance(coordinate, target, elevations, True)
 
-# get neighbors
 def get_neighbors(coordinate):
-    # Todo: not gonna lie i think the coordinates are formatted as (y, x) but its working so ima keep it
+    """
+    Get neighbor coordinates from current
+    :param coordinate: current point
+    :return: list of neighbor coordinate tuples
+    """
     neighbors = []
     rows, cols = MAX_Y, MAX_X
     directions = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
@@ -81,25 +109,38 @@ def get_neighbors(coordinate):
             neighbors.append((new_col, new_row))
     return neighbors
 
-# backtrack to get path after A*
 def construct_path(visited_nodes, start, end):
+    """
+    Reconstruct path by backtracking after running A*
+    :param visited_nodes: dictionary of visited points and their parents
+    :param start: start point
+    :param end: end point
+    :return: list of coordinate tuples in order of when they were visited
+    """
     path = []
     head = end
-    while head is not start:  # backtrack until head is None to generate path
+    while head is not start:
         path.append(head)
         head = visited_nodes.get(head)
     path.append(start)
     return path[::-1]
 
-# A* stuff
 def search(start, end, terrain, elevations):
+    """
+    A* search algorithm
+    :param start: start point
+    :param end: end point
+    :param terrain: array of terrain image RGB values
+    :param elevations: elevation data
+    :return: quickest path from start to end accounting for terrain
+    """
     # todo: incorporate terrain data, distance, heuristic, etc
     # todo: distance calculations need to update to account for grid size, direction, etc
-    visited = set()
-    to_visit = []   # priority queue for new nodes to visit
-    g_scores = {start: 0}
-    f_scores = {start: heuristic(start, end, elevations)}
-    parents = {}
+    visited = set()     # set to keep track of visited nodes
+    to_visit = []       # priority queue for new nodes to visit
+    g_scores = {start: 0}   # dictionary for keeping track of cost associated with points
+    f_scores = {start: heuristic(start, end, elevations)}   # dictionary for keeping track of heuristic values of points
+    parents = {}        # dictionary for storing points and their parents (used for backtracking to get path)
     heapq.heappush(to_visit, (0, start))
     while to_visit:
         current = heapq.heappop(to_visit)[1]
@@ -112,13 +153,13 @@ def search(start, end, terrain, elevations):
             terrain_type = (terrain[neighbor[1]][neighbor[0]][0],
                             terrain[neighbor[1]][neighbor[0]][1],
                             terrain[neighbor[1]][neighbor[0]][2])
-            time_factor = terrain_types.get(terrain_type)       # todo: check indexing
+            time_factor = terrain_types.get(terrain_type)
             if time_factor is None:
                 continue
             g_score = distance(current, neighbor, elevations, False) + g_scores.get(current)
             if neighbor not in g_scores or g_score < g_scores[neighbor]:
                 g_scores[neighbor] = g_score
-                f_scores[neighbor] = g_score + heuristic(neighbor, end, elevations) * time_factor   # comment out time factor if issues
+                f_scores[neighbor] = g_score + heuristic(neighbor, end, elevations) * time_factor
                 parents[neighbor] = current
                 heapq.heappush(to_visit, (f_scores[neighbor], neighbor))
     return None, 0

@@ -14,13 +14,13 @@ GRID_WIDTH = 10.29
 GRID_HEIGHT = 7.55
 # RGB values for the various terrain types and the associated heuristic cost value
 terrain_types = {
-    (248, 148, 18): 1,     # OPEN_LAND
-    (255, 192, 0): 10,     # ROUGH_MEADOW
-    (255, 255, 255): 1,    # EASY_FOREST
-    (2, 208, 60): 2,       # SLOW_FOREST
-    (2, 136, 40): 5,       # WALK_FOREST
-    (71, 51, 3): 1,        # PAVED_ROAD
-    (0, 0, 0): 1,          # FOOTPATH
+    (248, 148, 18): 10,     # OPEN_LAND
+    (255, 192, 0): 1,     # ROUGH_MEADOW
+    (255, 255, 255): 10,    # EASY_FOREST
+    (2, 208, 60): 5,       # SLOW_FOREST
+    (2, 136, 40): 2,       # WALK_FOREST
+    (71, 51, 3): 10,        # PAVED_ROAD
+    (0, 0, 0): 10,          # FOOTPATH
     (205, 0, 101): None,   # OUT_OF_BOUNDS
     (5, 73, 24): None,     # IMPASSIBLE_VEGETATION
     (0, 0, 255): None      # WATER
@@ -48,7 +48,7 @@ def get_route(terrain, elevations, poi_path):
         route.extend(between_points)
         total_distance += between_distance
     print(f"Total Distance: {total_distance}m")
-    return set(route)
+    return route
 
 def distance(coordinate, target, elevations, heuristic_bool):
     """
@@ -72,8 +72,6 @@ def distance(coordinate, target, elevations, heuristic_bool):
     else:
         return (((GRID_HEIGHT ** 2) + (GRID_WIDTH ** 2)) ** (1/2)) * d
 
-******** should you multiply by terrain score in search? would this make the heuristic over the actual ammount???
-
 def heuristic(coordinate, target, elevations, terrain_time):
     """
     Heuristic function for guiding A* search
@@ -83,7 +81,7 @@ def heuristic(coordinate, target, elevations, terrain_time):
     :param terrain_time: terrain time estimate
     :return: estimated cost to target by using 3d Euclidean distance
     """
-    return distance(coordinate, target, elevations, True) * terrain_time
+    return distance(coordinate, target, elevations, True) / terrain_time
 
 def get_neighbors(coordinate):
     """
@@ -125,7 +123,7 @@ def search(start, end, terrain, elevations):
     :param elevations: elevation data
     :return: quickest path from start to end accounting for terrain
     """
-    # todo: check that backtrack is working correctly
+    # todo: check that backtrack, heuristic is working correctly
     visited = set()     # set to keep track of visited nodes
     to_visit = []       # priority queue for new nodes to visit
     g_scores = {start: 0}   # dictionary for keeping track of cost associated with points
@@ -143,7 +141,10 @@ def search(start, end, terrain, elevations):
             terrain_type = (terrain[neighbor[1]][neighbor[0]][0],
                             terrain[neighbor[1]][neighbor[0]][1],
                             terrain[neighbor[1]][neighbor[0]][2])
-            time_factor = terrain_types.get(terrain_type)
+            if terrain_type in terrain_types:
+                time_factor = terrain_types.get(terrain_type)
+            else:
+                time_factor = 1
             if time_factor is None:
                 continue
             g_score = distance(current, neighbor, elevations, False) + g_scores.get(current)

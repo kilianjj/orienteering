@@ -47,7 +47,8 @@ def get_route(terrain, elevations, poi_path):
             continue
         route.extend(between_points)
         total_distance += between_distance
-    print(f"Total Distance: {total_distance}m")
+    # print(f"Total Distance: {total_distance}m")
+    print(total_distance)
     return route
 
 def distance(coordinate, target, elevations, heuristic_bool):
@@ -91,7 +92,16 @@ def get_neighbors(coordinate):
     """
     neighbors = []
     rows, cols = MAX_Y, MAX_X
-    directions = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
+    directions = [
+                  # (-1, -1),
+                  (-1, 0),
+                  # (-1, 1),
+                  (0, -1),
+                  (0, 1),
+                  # (1, -1),
+                  (1, 0),
+                  # (1, 1)
+                ]
     for y, x in directions:
         new_row, new_col = coordinate[1] + x, coordinate[0] + y
         if 0 <= new_row < rows and 0 <= new_col < cols and new_row < MAX_X and new_col < MAX_Y:

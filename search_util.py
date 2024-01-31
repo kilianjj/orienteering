@@ -14,13 +14,13 @@ GRID_WIDTH = 10.29
 GRID_HEIGHT = 7.55
 # RGB values for the various terrain types and the associated heuristic cost value
 terrain_types = {
-    (248, 148, 18): 100,     # OPEN_LAND
-    (255, 192, 0): 10,     # ROUGH_MEADOW
-    (255, 255, 255): 100,    # EASY_FOREST
-    (2, 208, 60): 50,       # SLOW_FOREST
-    (2, 136, 40): 20,       # WALK_FOREST
-    (71, 51, 3): 100,        # PAVED_ROAD
-    (0, 0, 0): 100,          # FOOTPATH
+    (248, 148, 18): 1000,     # OPEN_LAND
+    (255, 192, 0): 100,     # ROUGH_MEADOW
+    (255, 255, 255): 1000,    # EASY_FOREST
+    (2, 208, 60): 500,       # SLOW_FOREST
+    (2, 136, 40): 200,       # WALK_FOREST
+    (71, 51, 3): 1000,        # PAVED_ROAD
+    (0, 0, 0): 1000,          # FOOTPATH
     (205, 0, 101): None,   # OUT_OF_BOUNDS
     (5, 73, 24): None,     # IMPASSIBLE_VEGETATION
     (0, 0, 255): 1      # WATER
@@ -51,13 +51,12 @@ def get_route(terrain, elevations, poi_path):
     print(total_distance)
     return route
 
-def distance(coordinate, target, elevations, heuristic_bool):
+def distance(coordinate, target, elevations):
     """
     Calculates the distance between 2 points
     :param coordinate: current coordinate
     :param target: target coordinate
     :param elevations: elevation values
-    :param heuristic_bool: true if this is being used to calculate heuristic (heuristic is unit-less, cost is in meters)
     :return: float distance between the two points
     """
     # remove multiplying by grid dimensions
@@ -66,14 +65,6 @@ def distance(coordinate, target, elevations, heuristic_bool):
     z = (elevations[coordinate[1]][coordinate[0]] - elevations[target[1]][target[0]]) ** 2      # indexing y then x
     d = (x + y + z) ** (1/2)
     return d
-    # if heuristic_bool:
-    #     return d
-    # if x == 0:
-    #     return GRID_HEIGHT * d
-    # elif y == 0:
-    #     return GRID_WIDTH * d
-    # else:
-    #     return (((GRID_HEIGHT ** 2) + (GRID_WIDTH ** 2)) ** (1/2)) * d
 
 def heuristic(coordinate, target, elevations, terrain_time):
     """
@@ -84,7 +75,7 @@ def heuristic(coordinate, target, elevations, terrain_time):
     :param terrain_time: terrain time estimate
     :return: estimated cost to target by using 3d Euclidean distance
     """
-    return distance(coordinate, target, elevations, True) / terrain_time
+    return distance(coordinate, target, elevations) / terrain_time
 
 def get_neighbors(coordinate):
     """
@@ -106,7 +97,7 @@ def get_neighbors(coordinate):
                 ]
     for y, x in directions:
         new_row, new_col = coordinate[1] + x, coordinate[0] + y
-        if 0 <= new_row < rows and 0 <= new_col < cols and new_row < MAX_X and new_col < MAX_Y:
+        if 0 <= new_row < rows and 0 <= new_col < cols and new_row < MAX_Y and new_col < MAX_X:
             neighbors.append((new_col, new_row))
     return neighbors
 
@@ -144,7 +135,6 @@ def search(start, end, terrain, elevations):
     heapq.heappush(to_visit, (0, start))
     while to_visit:
         current = heapq.heappop(to_visit)[1]
-        print(current)
         if current == end:
             return construct_path(parents, start, end), g_scores.get(end)
         visited.add(current)
@@ -160,7 +150,7 @@ def search(start, end, terrain, elevations):
                 time_factor = 1
             if time_factor is None:
                 continue
-            g_score = distance(current, neighbor, elevations, False) + g_scores.get(current)
+            g_score = distance(current, neighbor, elevations) + g_scores.get(current)
             if neighbor not in g_scores or g_score < g_scores[neighbor]:
                 g_scores[neighbor] = g_score
                 f_scores[neighbor] = g_score + heuristic(neighbor, end, elevations, time_factor)

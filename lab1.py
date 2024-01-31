@@ -1,5 +1,5 @@
 """
-Orienteering problem solving program
+Orienteering problem-solving program
 CS 331 Lab 1
 Author: Kilian Jakstis
 """
@@ -7,9 +7,10 @@ Author: Kilian Jakstis
 import argparse
 import file_util
 import image_util
+import search_util
 
 """
-Parse commandline args, read in the necessary files, compute ideal path, compute distance, draw and save modified map
+Parse commandline args, read in the necessary files, compute ideal path and distance, draw and save modified map
 """
 if __name__ == '__main__':
     # commandline args
@@ -24,16 +25,8 @@ if __name__ == '__main__':
     elevations = file_util.get_elevations(args.elevation_file)
     map_array = image_util.read_image(args.terrain_image)
     if poi_path is not None and elevations is not None and map_array is not None:
-        # delete me later (testing***)
-        print(poi_path[:5])
-        print(elevations[:5])
-        print(map_array[200, 10])
-        # compute the path
-
-        # calculate and print the returned path distance
-
+        # compute the path and print distance
+        route = search_util.get_route(map_array, elevations, poi_path)
         # draw the path on the image and save it to output file
-        ideal_path = []    # delete later and actually implement
-        for x in range(200):
-            ideal_path.append((20, x))
-        image_util.save_image(map_array, ideal_path, args.output_image_filename)
+        if route is not None:
+            image_util.save_image(map_array, route, args.output_image_filename)

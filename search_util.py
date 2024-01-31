@@ -14,16 +14,16 @@ GRID_WIDTH = 10.29
 GRID_HEIGHT = 7.55
 # RGB values for the various terrain types and the associated heuristic cost value
 terrain_types = {
-    (248, 148, 18): 10,     # OPEN_LAND
-    (255, 192, 0): 1,     # ROUGH_MEADOW
-    (255, 255, 255): 10,    # EASY_FOREST
-    (2, 208, 60): 5,       # SLOW_FOREST
-    (2, 136, 40): 2,       # WALK_FOREST
-    (71, 51, 3): 10,        # PAVED_ROAD
-    (0, 0, 0): 10,          # FOOTPATH
+    (248, 148, 18): 100,     # OPEN_LAND
+    (255, 192, 0): 10,     # ROUGH_MEADOW
+    (255, 255, 255): 100,    # EASY_FOREST
+    (2, 208, 60): 50,       # SLOW_FOREST
+    (2, 136, 40): 20,       # WALK_FOREST
+    (71, 51, 3): 100,        # PAVED_ROAD
+    (0, 0, 0): 100,          # FOOTPATH
     (205, 0, 101): None,   # OUT_OF_BOUNDS
     (5, 73, 24): None,     # IMPASSIBLE_VEGETATION
-    (0, 0, 255): None      # WATER
+    (0, 0, 255): 1      # WATER
 }
 
 def get_route(terrain, elevations, poi_path):
@@ -41,13 +41,13 @@ def get_route(terrain, elevations, poi_path):
     route = []
     for i in range(len(poi_path) - 1):
         between_points, between_distance = search(poi_path[i], poi_path[i+1], terrain, elevations)
-        # print(between_points)
+        # print(i, between_distance)
         if between_points is None:
             print("Path not found for this section")
             continue
         route.extend(between_points)
         total_distance += between_distance
-    # print(f"Total Distance: {total_distance}m")
+    # todo: which is it?? print(f"Total Distance: {total_distance}m")
     print(total_distance)
     return route
 
@@ -60,18 +60,20 @@ def distance(coordinate, target, elevations, heuristic_bool):
     :param heuristic_bool: true if this is being used to calculate heuristic (heuristic is unit-less, cost is in meters)
     :return: float distance between the two points
     """
-    x = (coordinate[0] - target[0]) ** 2
-    y = (coordinate[1] - target[1]) ** 2
+    # remove multiplying by grid dimensions
+    x = ((coordinate[0] - target[0]) * GRID_WIDTH) ** 2
+    y = ((coordinate[1] - target[1]) * GRID_HEIGHT) ** 2
     z = (elevations[coordinate[1]][coordinate[0]] - elevations[target[1]][target[0]]) ** 2      # indexing y then x
-    d = (x + y + z) ** (1/3)
-    if heuristic_bool:
-        return d
-    if x == 0:
-        return GRID_HEIGHT * d
-    elif y == 0:
-        return GRID_WIDTH * d
-    else:
-        return (((GRID_HEIGHT ** 2) + (GRID_WIDTH ** 2)) ** (1/2)) * d
+    d = (x + y + z) ** (1/2)
+    return d
+    # if heuristic_bool:
+    #     return d
+    # if x == 0:
+    #     return GRID_HEIGHT * d
+    # elif y == 0:
+    #     return GRID_WIDTH * d
+    # else:
+    #     return (((GRID_HEIGHT ** 2) + (GRID_WIDTH ** 2)) ** (1/2)) * d
 
 def heuristic(coordinate, target, elevations, terrain_time):
     """
@@ -142,6 +144,7 @@ def search(start, end, terrain, elevations):
     heapq.heappush(to_visit, (0, start))
     while to_visit:
         current = heapq.heappop(to_visit)[1]
+        print(current)
         if current == end:
             return construct_path(parents, start, end), g_scores.get(end)
         visited.add(current)

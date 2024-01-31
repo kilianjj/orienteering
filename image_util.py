@@ -22,12 +22,11 @@ def read_image(path):
         print(f"Error reading in terrain file: {e}")
         return None
 
-# do not delete: this is the one that saves image, using show for debugging rn
 def save_image(im, route, output_path):
     """
     Draw the ideal path on the terrain map and save in the desired location
     :param im: numpy array of the terrain map
-    :param route: the ideal path (currently in tuples of coordinates***)
+    :param route: the ideal path
     :param output_path: path at which to save output image
     """
     try:
@@ -40,10 +39,10 @@ def save_image(im, route, output_path):
     except Exception as e:
         print(f"Error writing output image: {e}")
 
-# delete this one after testing
+# for testing - this one just opens the image
 # def save_image(im, route, output_path):
 #     """
-#     Draw the ideal path on the terrain map and save in the desired location
+#     Draw the ideal path on the terrain map and show image
 #     :param im: numpy array of the terrain map
 #     :param route: the ideal path (currently in tuples of coordinates***)
 #     :param output_path: path at which to save output image

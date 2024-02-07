@@ -1,7 +1,6 @@
 """
 Searching logic and related functions
 Author: Kilian Jakstis
-*** elevations and terrain image indexed by y then x
 """
 
 import heapq
@@ -70,7 +69,6 @@ def heuristic(coordinate, target, elevations):
     :param coordinate: current point
     :param target: goal point
     :param elevations: elevation values
-    # :param terrain_time: terrain time estimate
     :return: estimated cost to target by using 3d Euclidean distance
     """
     return distance(coordinate, target, elevations)
@@ -122,7 +120,7 @@ def search(start, end, terrain, elevations):
     :param end: end point
     :param terrain: array of terrain image RGB values
     :param elevations: elevation data
-    :return: quickest path from start to end accounting for terrain
+    :return: quickest (time) path from start to end accounting for terrain types
     """
     visited = set()             # set to keep track of visited nodes
     to_visit = []               # priority queue for new nodes to visit

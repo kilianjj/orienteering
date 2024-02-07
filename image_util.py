@@ -39,7 +39,7 @@ def save_image(im, route, output_path):
     except Exception as e:
         print(f"Error writing output image: {e}")
 
-# for testing - this one just opens the image
+# for testing - just opens the image
 # def save_image(im, route, output_path):
 #     """
 #     Draw the ideal path on the terrain map and show image

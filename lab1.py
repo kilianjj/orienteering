@@ -1,13 +1,13 @@
 """
-Orienteering problem-solving program
+Orienteering path-solving program
 CS 331 Lab 1
 Author: Kilian Jakstis
 """
 
 import argparse
 import file_util
-import image_util
 import search_util
+import image_util
 
 """
 Parse commandline args, read in the necessary files, compute ideal path and distance, draw and save modified map

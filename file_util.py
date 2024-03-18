@@ -3,6 +3,8 @@ Functions for file processing
 Author: Kilian Jakstis
 """
 
+import global_values as values
+
 def get_poi_path(path_file):
     """
     Read the POI points that must be visited in the event in from relevant file
@@ -20,12 +22,21 @@ def get_poi_path(path_file):
         print(f"Error reading path file: {e}")
         return None
 
+def zero_elevations():
+    """
+    :return: 0 array for uniform elevations
+    """
+    elevations = [[0 for _ in range(values.MAX_X)] for __ in range(values.MAX_Y)]
+    return elevations
+
 def get_elevations(elevation_file):
     """
     Read the elevations in from relevant file
-    :param elevation_file: path to elevation file
+    :param elevation_file: path to elevation file - if None population with all 0s
     :return: list of elevations if file read is successful - otherwise None
     """
+    if elevation_file == "none":
+        return zero_elevations()
     elevations = []
     try:
         with open(elevation_file) as file:
@@ -34,5 +45,5 @@ def get_elevations(elevation_file):
                 elevations.append([float(value) for value in values][:-5])
         return elevations
     except Exception as e:
-        print(f"Error reading elevation file: {e}")
-        return None
+        print(f"Error reading elevation file: {e}. Proceeding with uniform elevations.")
+    return zero_elevations()

@@ -48,10 +48,16 @@ TERRAIN_TYPES = {
 
 def init_window():
     cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
-    # cv2.resizeWindow(WINDOW_NAME, WINDOW_WIDTH, WINDOW_HEIGHT)
+    cv2.resizeWindow(WINDOW_NAME, WINDOW_WIDTH, WINDOW_HEIGHT)
 
 def clean_windows():
     cv2.destroyAllWindows()
+
+def format_color(display_type):
+    return np.array([ANIMATION_COLORS[display_type][0],
+              ANIMATION_COLORS[display_type][1],
+              ANIMATION_COLORS[display_type][2],
+              255], dtype=np.uint8)
 
 def update_image(image):
     bgr_image = cv2.cvtColor(image, cv2.COLOR_RGBA2BGR)
@@ -65,41 +71,25 @@ def update_image(image):
 def update_image_path(original_image, route, start, end):
     image = copy.deepcopy(original_image)
     # change path segment colors
-    path_values = np.array([ANIMATION_COLORS["path"][0],
-                            ANIMATION_COLORS["path"][1],
-                            ANIMATION_COLORS["path"][2],
-                            255], dtype=np.uint8)
+    path_values = format_color("path")
     for point in route:
         image[point[1]][point[0]] = path_values
     # change start point color
-    start_values = np.array([ANIMATION_COLORS["start"][0],
-                             ANIMATION_COLORS["start"][1],
-                             ANIMATION_COLORS["start"][2],
-                             255], dtype=np.uint8)
+    start_values = format_color("start")
     image[start[1]][start[0]] = start_values
     # change target color
-    target_values = np.array([ANIMATION_COLORS["poi"][0],
-                           ANIMATION_COLORS["poi"][1],
-                           ANIMATION_COLORS["poi"][2],
-                           255], dtype=np.uint8)
-    image[end[1]][end[0]] = target_values
+    image[end[1]][end[0]] = start_values
     update_image(image)
 
 def update_search(original_image, frontier, visited, route, start, end):
     # update_image_path(original_image, route, poi_list)
     image = copy.deepcopy(original_image)
     # change points that were visited
-    visited_values = np.array([ANIMATION_COLORS["visited"][0],
-                            ANIMATION_COLORS["visited"][1],
-                            ANIMATION_COLORS["visited"][2],
-                            255], dtype=np.uint8)
+    visited_values = format_color("visited")
     for point in visited:
         image[point[1]][point[0]] = visited_values
     # change points in frontier
-    frontier_values = np.array([ANIMATION_COLORS["frontier"][0],
-                               ANIMATION_COLORS["frontier"][1],
-                               ANIMATION_COLORS["frontier"][2],
-                               255], dtype=np.uint8)
+    frontier_values = format_color("frontier")
     for point in frontier:
         image[point[1]][point[0]] = frontier_values
     update_image_path(image, route, start, end)

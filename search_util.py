@@ -4,7 +4,7 @@ Author: Kilian Jakstis
 """
 
 import heapq
-import global_values as values
+import image_util
 
 def get_route(terrain, elevations, poi_path):
     """
@@ -14,18 +14,23 @@ def get_route(terrain, elevations, poi_path):
     :param poi_path: list of POIs in the order they must be visited
     :return: full route (as a list of coordinate tuples) in order of those visited
     """
+    animate_on = True
     if len(poi_path) < 2:
         # only 1 point - no target
         return
     total_distance = 0
     route = []
     for i in range(len(poi_path) - 1):
-        between_points, between_distance = search(poi_path[i], poi_path[i+1], terrain, elevations)
+        between_points, between_distance = search(poi_path[i], poi_path[i+1], terrain, elevations, route, animate_on)
         if between_points is None:
             # path not found
             continue
         route.extend(between_points)
         total_distance += between_distance
+        if animate_on:
+            animate_on = image_util.update_image_path(terrain, route, poi_path[i], poi_path[i+1])
+    if animate_on:
+        image_util.update_image_path(terrain, route, poi_path[0], poi_path[-1])
     print(f"Total Distance: {total_distance}m")
     return route
 
@@ -38,8 +43,8 @@ def distance(coordinate, target, elevations):
     :param elevations: elevation values
     :return: float distance between the two points
     """
-    x = ((coordinate[0] - target[0]) * values.GRID_WIDTH) ** 2
-    y = ((coordinate[1] - target[1]) * values.GRID_HEIGHT) ** 2
+    x = ((coordinate[0] - target[0]) * image_util.GRID_WIDTH) ** 2
+    y = ((coordinate[1] - target[1]) * image_util.GRID_HEIGHT) ** 2
     z = (elevations[coordinate[1]][coordinate[0]] - elevations[target[1]][target[0]]) ** 2
     d = (x + y + z) ** (1/2)
     return d
@@ -61,7 +66,7 @@ def get_neighbors(coordinate):
     :return: list of neighbor coordinate tuples
     """
     neighbors = []
-    rows, cols = values.MAX_Y, values.MAX_X
+    rows, cols = image_util.MAX_Y, image_util.MAX_X
     directions = [
                   # (-1, -1),
                   (-1, 0),
@@ -74,7 +79,7 @@ def get_neighbors(coordinate):
                 ]
     for y, x in directions:
         new_row, new_col = coordinate[1] + x, coordinate[0] + y
-        if 0 <= new_row < rows and 0 <= new_col < cols and new_row < values.MAX_Y and new_col < values.MAX_X:
+        if 0 <= new_row < rows and 0 <= new_col < cols and new_row < image_util.MAX_Y and new_col < image_util.MAX_X:
             neighbors.append((new_col, new_row))
     return neighbors
 
@@ -94,7 +99,7 @@ def construct_path(visited_nodes, start, end):
     path.append(start)
     return path[::-1]
 
-def search(start, end, terrain, elevations):
+def search(start, end, terrain, elevations, route, animate):
     """
     A* search algorithm
     :param start: start point
@@ -105,13 +110,18 @@ def search(start, end, terrain, elevations):
     """
     visited = set()             # set to keep track of visited nodes
     to_visit = []               # priority queue for new nodes to visit
+    animation_frontier = []     # list of nodes on frontier
     distances = {start: 0}      # dictionary for keeping track of distance associated with points
     times = {start: 0}          # dictionary for keeping track of times associated with visiting points
     f_scores = {start: 0}       # dictionary for keeping track of heuristic values of points
     parents = {}                # dictionary for storing points and their parents (used for backtracking to get path)
     heapq.heappush(to_visit, (0, start))
     while to_visit:
+        if animate:
+            image_util.update_search(terrain, animation_frontier, visited, route, start, end)
         current = heapq.heappop(to_visit)[1]
+        if current in animation_frontier:
+            animation_frontier.remove(current)
         if current == end:
             return construct_path(parents, start, end), distances.get(end)
         visited.add(current)
@@ -121,8 +131,8 @@ def search(start, end, terrain, elevations):
             terrain_type = (terrain[neighbor[1]][neighbor[0]][0],
                             terrain[neighbor[1]][neighbor[0]][1],
                             terrain[neighbor[1]][neighbor[0]][2])
-            if terrain_type in values.TERRAIN_TYPES:
-                time_factor = values.TERRAIN_TYPES.get(terrain_type)
+            if terrain_type in image_util.TERRAIN_TYPES:
+                time_factor = image_util.TERRAIN_TYPES.get(terrain_type)
             else:
                 time_factor = 1
             if time_factor is None:
@@ -135,4 +145,5 @@ def search(start, end, terrain, elevations):
                 f_scores[neighbor] = time + heuristic(neighbor, end, elevations)
                 parents[neighbor] = current
                 heapq.heappush(to_visit, (f_scores[neighbor], neighbor))
+                animation_frontier.append(neighbor)
     return None, 0

@@ -3,7 +3,7 @@ Functions for file processing
 Author: Kilian Jakstis
 """
 
-import global_values as values
+import image_util
 
 def get_poi_path(path_file):
     """
@@ -26,7 +26,7 @@ def zero_elevations():
     """
     :return: 0 array for uniform elevations
     """
-    elevations = [[0 for _ in range(values.MAX_X)] for __ in range(values.MAX_Y)]
+    elevations = [[0 for _ in range(image_util.MAX_X)] for __ in range(image_util.MAX_Y)]
     return elevations
 
 def get_elevations(elevation_file):

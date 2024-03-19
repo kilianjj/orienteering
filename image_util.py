@@ -9,19 +9,14 @@ import os
 import cv2
 import copy
 
-# map pixel width and height
-MAX_X = 395
-MAX_Y = 500
-
 # grid sizes
 GRID_WIDTH = 10.29
 GRID_HEIGHT = 7.55
 
 # window constants
 WINDOW_NAME = 'A* Visualization'
-WINDOW_WIDTH = 600
-WINDOW_HEIGHT = 800
-SQUARE_SIZE = 50
+MAX_WINDOW_X = 1200
+MAX_WINDOW_Y = 1000
 
 # colors for animation
 ANIMATION_COLORS = {
@@ -46,9 +41,9 @@ TERRAIN_TYPES = {
     (0, 0, 255): 1000      # WATER
 }
 
-def init_window():
+def init_window(x, y):
     cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(WINDOW_NAME, WINDOW_WIDTH, WINDOW_HEIGHT)
+    cv2.resizeWindow(WINDOW_NAME, x if x < MAX_WINDOW_X else MAX_WINDOW_X, y if y < MAX_WINDOW_Y else MAX_WINDOW_Y)
 
 def clean_windows():
     cv2.destroyAllWindows()

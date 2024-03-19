@@ -16,13 +16,13 @@ def handle_cmdline_args():
     parser.add_argument('elevation_file', help="terrain elevations file")  # elevation values - defaults to 0s if "none"
     return parser.parse_args()
 
-def begin_animation():
+def begin_animation(x, y):
     # see if user ready for animation
     user_input = input("Hit 'q' at any time during the animation to quit and hit 'p' to pause. \n"
                        "Enter anything to begin the animation: ")
     if user_input.strip() == "q":
         return
-    image_util.init_window()
+    image_util.init_window(x, y)
 
 def after_alg(t_map, route):
     user_input = input("Enter 'y' to save output path image or anything else to terminate: ")
@@ -46,9 +46,9 @@ def main():
     max_x = map_array.shape[1]
     max_y = map_array.shape[0]
     if poi_path is not None and elevations is not None and map_array is not None:
-        begin_animation()
+        begin_animation(max_x, max_y)
         # compute the path and print distance
-        route = search_util.get_route(map_array, elevations, poi_path)
+        route = search_util.get_route(map_array, elevations, poi_path, max_x, max_y)
         image_util.clean_windows()
         if route:
             after_alg(map_array, route)

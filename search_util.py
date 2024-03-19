@@ -6,12 +6,14 @@ Author: Kilian Jakstis
 import heapq
 import image_util
 
-def get_route(terrain, elevations, poi_path):
+def get_route(terrain, elevations, poi_path, x, y):
     """
     Get the full route by constructing smaller routes between pairs of points in the specified order
     :param terrain: RGB array of terrain image
     :param elevations: elevation array
     :param poi_path: list of POIs in the order they must be visited
+    :param x: x dimension length
+    :param y: y dimension length
     :return: full route (as a list of coordinate tuples) in order of those visited
     """
     if len(poi_path) < 2:
@@ -20,7 +22,7 @@ def get_route(terrain, elevations, poi_path):
     total_distance = 0
     route = []
     for i in range(len(poi_path) - 1):
-        between_points, between_distance = search(poi_path[i], poi_path[i+1], terrain, elevations, route)
+        between_points, between_distance = search(poi_path[i], poi_path[i+1], terrain, elevations, route, x, y)
         if between_points is None:
             # path not found
             continue
@@ -56,14 +58,16 @@ def heuristic(coordinate, target, elevations):
     """
     return distance(coordinate, target, elevations)
 
-def get_neighbors(coordinate):
+def get_neighbors(coordinate, max_x, max_y):
     """
     Get neighbor coordinates from current
     :param coordinate: current point
+    :param max_x: max x value
+    :param max_y: max y value
     :return: list of neighbor coordinate tuples
     """
     neighbors = []
-    rows, cols = image_util.MAX_Y, image_util.MAX_X
+    rows, cols = max_y, max_x
     directions = [
                   # (-1, -1),
                   (-1, 0),
@@ -76,7 +80,7 @@ def get_neighbors(coordinate):
                 ]
     for y, x in directions:
         new_row, new_col = coordinate[1] + x, coordinate[0] + y
-        if 0 <= new_row < rows and 0 <= new_col < cols and new_row < image_util.MAX_Y and new_col < image_util.MAX_X:
+        if 0 <= new_row < rows and 0 <= new_col < cols and new_row < max_y and new_col < max_x:
             neighbors.append((new_col, new_row))
     return neighbors
 
@@ -96,7 +100,7 @@ def construct_path(visited_nodes, start, end):
     path.append(start)
     return path[::-1]
 
-def search(start, end, terrain, elevations, route):
+def search(start, end, terrain, elevations, route, x, y):
     """
     A* search algorithm
     :param start: start point
@@ -104,6 +108,8 @@ def search(start, end, terrain, elevations, route):
     :param terrain: array of terrain image RGB values
     :param elevations: elevation data
     :param route: current route path between POIs
+    :param x: width length
+    :param y: height length
     :return: quickest (time) path from start to end accounting for terrain types
     """
     visited = set()             # set to keep track of visited nodes
@@ -122,7 +128,7 @@ def search(start, end, terrain, elevations, route):
         if current == end:
             return construct_path(parents, start, end), distances.get(end)
         visited.add(current)
-        for neighbor in get_neighbors(current):
+        for neighbor in get_neighbors(current, x, y):
             if neighbor in visited:
                 continue
             terrain_type = (terrain[neighbor[1]][neighbor[0]][0],

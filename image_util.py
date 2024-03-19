@@ -58,11 +58,9 @@ def update_image(image):
     cv2.imshow(WINDOW_NAME, bgr_image)
     key = cv2.waitKey(30)
     if key == ord('q'):  # 'q' key to quit
-        # clean_windows()
         exit(1)  # just exit program
     elif key == ord('p'):  # 'p' key to pause
         cv2.waitKey(-1)
-    return True
 
 def update_image_path(original_image, route, start, end):
     image = copy.deepcopy(original_image)

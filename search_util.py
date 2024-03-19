@@ -14,23 +14,20 @@ def get_route(terrain, elevations, poi_path):
     :param poi_path: list of POIs in the order they must be visited
     :return: full route (as a list of coordinate tuples) in order of those visited
     """
-    animate_on = True
     if len(poi_path) < 2:
         # only 1 point - no target
         return
     total_distance = 0
     route = []
     for i in range(len(poi_path) - 1):
-        between_points, between_distance = search(poi_path[i], poi_path[i+1], terrain, elevations, route, animate_on)
+        between_points, between_distance = search(poi_path[i], poi_path[i+1], terrain, elevations, route)
         if between_points is None:
             # path not found
             continue
         route.extend(between_points)
         total_distance += between_distance
-        if animate_on:
-            animate_on = image_util.update_image_path(terrain, route, poi_path[i], poi_path[i+1])
-    if animate_on:
-        image_util.update_image_path(terrain, route, poi_path[0], poi_path[-1])
+        image_util.update_image_path(terrain, route, poi_path[i], poi_path[i+1])
+    image_util.update_image_path(terrain, route, poi_path[0], poi_path[-1])
     print(f"Total Distance: {total_distance}m")
     return route
 
@@ -99,13 +96,14 @@ def construct_path(visited_nodes, start, end):
     path.append(start)
     return path[::-1]
 
-def search(start, end, terrain, elevations, route, animate):
+def search(start, end, terrain, elevations, route):
     """
     A* search algorithm
     :param start: start point
     :param end: end point
     :param terrain: array of terrain image RGB values
     :param elevations: elevation data
+    :param route: current route path between POIs
     :return: quickest (time) path from start to end accounting for terrain types
     """
     visited = set()             # set to keep track of visited nodes
@@ -117,8 +115,7 @@ def search(start, end, terrain, elevations, route, animate):
     parents = {}                # dictionary for storing points and their parents (used for backtracking to get path)
     heapq.heappush(to_visit, (0, start))
     while to_visit:
-        if animate:
-            image_util.update_search(terrain, animation_frontier, visited, route, start, end)
+        image_util.update_search(terrain, animation_frontier, visited, route, start, end)
         current = heapq.heappop(to_visit)[1]
         if current in animation_frontier:
             animation_frontier.remove(current)

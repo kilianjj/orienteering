@@ -42,7 +42,6 @@ def get_elevations(elevation_file, shape):
             for line in file:
                 values = line.split()
                 elevations.append([float(value) for value in values][:-5])
-        print(elevations[0], len(elevations))
         if len(elevations) == shape[0] and len(elevations[0]) == shape[1]:
             return elevations
     except Exception as e:

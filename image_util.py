@@ -8,10 +8,11 @@ import numpy as np
 import os
 import cv2
 import copy
+import time
 
 # grid sizes
-GRID_WIDTH = 10.29
-GRID_HEIGHT = 7.55
+# GRID_WIDTH = 10.29
+# GRID_HEIGHT = 7.55
 
 # window constants
 WINDOW_NAME = 'A* Visualization'
@@ -29,13 +30,13 @@ ANIMATION_COLORS = {
 
 # RGB values for the various terrain types and the associated time cost scalar
 TERRAIN_TYPES = {
-    (248, 148, 18): 1,     # OPEN_LAND
-    (255, 192, 0): 50,     # ROUGH_MEADOW
+    (248, 148, 18): 2,     # OPEN_LAND
+    (255, 192, 0): 200,     # ROUGH_MEADOW
     (255, 255, 255): 3,    # EASY_FOREST
-    (2, 208, 60): 5,       # SLOW_FOREST
-    (2, 136, 40): 25,      # WALK_FOREST
+    (2, 208, 60): 50,       # SLOW_FOREST
+    (2, 136, 40): 100,      # WALK_FOREST
     (71, 51, 3): 1,        # PAVED_ROAD
-    (0, 0, 0): 3,          # FOOTPATH
+    (0, 0, 0): 2,          # FOOTPATH
     (205, 0, 101): None,   # OUT_OF_BOUNDS
     (5, 73, 24): None,     # IMPASSIBLE_VEGETATION
     (0, 0, 255): 1000      # WATER
@@ -46,6 +47,7 @@ def init_window(x, y):
     cv2.resizeWindow(WINDOW_NAME, x if x < MAX_WINDOW_X else MAX_WINDOW_X, y if y < MAX_WINDOW_Y else MAX_WINDOW_Y)
 
 def clean_windows():
+    time.sleep(5)
     cv2.destroyAllWindows()
 
 def format_color(display_type):

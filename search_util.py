@@ -30,7 +30,7 @@ def get_route(terrain, elevations, poi_path, x, y):
         total_distance += between_distance
         image_util.update_image_path(terrain, route, poi_path[i], poi_path[i+1])
     image_util.update_image_path(terrain, route, poi_path[0], poi_path[-1])
-    print(f"Total Distance: {total_distance}m")
+    # print(f"Total Distance: {total_distance}m")
     return route
 
 def distance(coordinate, target, elevations):
@@ -42,8 +42,10 @@ def distance(coordinate, target, elevations):
     :param elevations: elevation values
     :return: float distance between the two points
     """
-    x = ((coordinate[0] - target[0]) * image_util.GRID_WIDTH) ** 2
-    y = ((coordinate[1] - target[1]) * image_util.GRID_HEIGHT) ** 2
+    # x = ((coordinate[0] - target[0]) * image_util.GRID_WIDTH) ** 2
+    # y = ((coordinate[1] - target[1]) * image_util.GRID_HEIGHT) ** 2
+    x = (coordinate[0] - target[0]) ** 2
+    y = (coordinate[1] - target[1]) ** 2
     z = (elevations[coordinate[1]][coordinate[0]] - elevations[target[1]][target[0]]) ** 2
     d = (x + y + z) ** (1/2)
     return d
@@ -120,8 +122,19 @@ def search(start, end, terrain, elevations, route, x, y):
     f_scores = {start: 0}       # dictionary for keeping track of heuristic values of points
     parents = {}                # dictionary for storing points and their parents (used for backtracking to get path)
     heapq.heappush(to_visit, (0, start))
+    iteration = 0
+    max_animation_iterations = int(x * y / 4)
+    ratio = distance(start, end, elevations) / distance((0, 0), (x-1, y-1), elevations)
     while to_visit:
-        image_util.update_search(terrain, animation_frontier, visited, route, start, end)
+        if x * y > 20000:
+            if iteration == int(ratio * max_animation_iterations):
+                image_util.update_search(terrain, animation_frontier, visited, route, start, end)
+            # image_util.update_search(terrain, animation_frontier, visited, route, start, end)
+            else:
+                iteration += 1
+                iteration = 0 if iteration > int(ratio * max_animation_iterations) else iteration
+        else:
+            image_util.update_search(terrain, animation_frontier, visited, route, start, end)
         current = heapq.heappop(to_visit)[1]
         if current in animation_frontier:
             animation_frontier.remove(current)
@@ -134,10 +147,8 @@ def search(start, end, terrain, elevations, route, x, y):
             terrain_type = (terrain[neighbor[1]][neighbor[0]][0],
                             terrain[neighbor[1]][neighbor[0]][1],
                             terrain[neighbor[1]][neighbor[0]][2])
-            if terrain_type in image_util.TERRAIN_TYPES:
-                time_factor = image_util.TERRAIN_TYPES.get(terrain_type)
-            else:
-                time_factor = 1
+            time_factor = image_util.TERRAIN_TYPES.get(terrain_type) if terrain_type in image_util.TERRAIN_TYPES \
+                else None
             if time_factor is None:
                 continue
             local_distance = distance(current, neighbor, elevations)
@@ -149,4 +160,6 @@ def search(start, end, terrain, elevations, route, x, y):
                 parents[neighbor] = current
                 heapq.heappush(to_visit, (f_scores[neighbor], neighbor))
                 animation_frontier.append(neighbor)
+        # if x * y < 2500:
+        #     time_import.sleep(1 / max(x, y))
     return None, 0

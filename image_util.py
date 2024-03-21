@@ -148,3 +148,26 @@ def get_download_directory():
         return download_directory   # if it exists and is a directory
     else:
         return None
+
+# # Define the dimensions and frame rate of the video
+# width = 640
+# height = 480
+# fps = 30
+#
+# # Create a VideoWriter object
+# fourcc = cv2.VideoWriter_fourcc(*'XVID')
+# out = cv2.VideoWriter('animation.avi', fourcc, fps, (width, height))
+#
+# # Create your animation frames
+# for i in range(100):
+#     # Create a blank frame
+#     frame = np.zeros((height, width, 3), dtype=np.uint8)
+#
+#     # Draw something on the frame (replace this with your animation)
+#     cv2.putText(frame, f"Frame {i}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+#
+#     # Write the frame to the video file
+#     out.write(frame)
+#
+# # Release the VideoWriter object
+# out.release()

@@ -5,6 +5,7 @@ Author: Kilian Jakstis
 
 import argparse
 import os
+import time
 import file_util
 import search_util
 import image_util

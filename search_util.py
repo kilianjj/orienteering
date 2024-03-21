@@ -5,6 +5,7 @@ Author: Kilian Jakstis
 
 import heapq
 import image_util
+import time as sleep
 
 def get_route(terrain, elevations, poi_path, x, y):
     """
@@ -19,6 +20,8 @@ def get_route(terrain, elevations, poi_path, x, y):
     if len(poi_path) < 2:
         # only 1 point - no target
         return
+    image_util.update_image(terrain)
+    sleep.sleep(3)
     total_distance = 0
     route = []
     for i in range(len(poi_path) - 1):
@@ -123,18 +126,19 @@ def search(start, end, terrain, elevations, route, x, y):
     parents = {}                # dictionary for storing points and their parents (used for backtracking to get path)
     heapq.heappush(to_visit, (0, start))
     iteration = 0
-    max_animation_iterations = int(x * y / 4)
-    ratio = distance(start, end, elevations) / distance((0, 0), (x-1, y-1), elevations)
+    max_animation_iterations = int(x * y / 20)
+    ratio = distance(start, end, elevations) / distance((0, 0), (x-1, y-1), elevations) * (x * y) / 100000
+    sleep.sleep(1)
     while to_visit:
-        if x * y > 20000:
-            if iteration == int(ratio * max_animation_iterations):
-                image_util.update_search(terrain, animation_frontier, visited, route, start, end)
-            # image_util.update_search(terrain, animation_frontier, visited, route, start, end)
-            else:
-                iteration += 1
-                iteration = 0 if iteration > int(ratio * max_animation_iterations) else iteration
-        else:
+        # if x * y > 2500:
+        if iteration == int(max_animation_iterations * ratio):
+            iteration = 0
             image_util.update_search(terrain, animation_frontier, visited, route, start, end)
+        # image_util.update_search(terrain, animation_frontier, visited, route, start, end)
+        else:
+            iteration += 1
+        # else:
+        #     image_util.update_search(terrain, animation_frontier, visited, route, start, end)
         current = heapq.heappop(to_visit)[1]
         if current in animation_frontier:
             animation_frontier.remove(current)
@@ -160,6 +164,4 @@ def search(start, end, terrain, elevations, route, x, y):
                 parents[neighbor] = current
                 heapq.heappush(to_visit, (f_scores[neighbor], neighbor))
                 animation_frontier.append(neighbor)
-        # if x * y < 2500:
-        #     time_import.sleep(1 / max(x, y))
     return None, 0

@@ -4,7 +4,7 @@ Author: Kilian Jakstis
 """
 
 import heapq
-import image_util
+from src import image_util
 import time as sleep
 
 def get_route(terrain, elevations, poi_path, x, y, out):
@@ -32,7 +32,7 @@ def get_route(terrain, elevations, poi_path, x, y, out):
         route.extend(between_points)
         total_distance += between_distance
         # draw changes
-        image_util.update_image_path(terrain, route, poi_path[i], poi_path[i+1], out)
+        image_util.update_image_path(terrain, route, poi_path[i], poi_path[i + 1], out)
     image_util.update_image_path(terrain, route, poi_path[0], poi_path[-1], out)
     # print(f"Total Distance: {total_distance}m")
     return route

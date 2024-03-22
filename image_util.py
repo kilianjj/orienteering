@@ -38,43 +38,48 @@ TERRAIN_TYPES = {
 }
 
 def init_window(x, y, directory):
+    """
+    Initialize the OpenCV display window
+    :param x: x dimension of image
+    :param y: y dimension of image
+    :param directory: directory in which to save animation file
+    :return: video writer object
+    """
     cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
-    # scale_factor_x = 800 / x
-    # scale_factor_y = 800 / y
-    # alter fps with example rn
+    # alter fps with example length
     fps = 10
-    # cv2.resizeWindow(WINDOW_NAME, int(x * scale_factor_x) if x * scale_factor_x < MAX_WINDOW_X else MAX_WINDOW_X,
-    #                  int(y * scale_factor_y) if y * scale_factor_y < MAX_WINDOW_Y else MAX_WINDOW_Y)
     cv2.resizeWindow(WINDOW_NAME, x if x < MAX_WINDOW_X else MAX_WINDOW_X,
                      y if y < MAX_WINDOW_Y else MAX_WINDOW_Y)
-    return cv2.VideoWriter(f"{directory}/animation.avi", cv2.VideoWriter_fourcc(*'MJPG'), int(fps * (1 / x * y)), (x, y))
+    return cv2.VideoWriter(f"{directory}/animation.avi", cv2.VideoWriter_fourcc(*'MJPG'),
+                           int(fps * (1 / x * y)), (x, y))
 
 def clean_windows():
+    """
+    Wait after visualization ends and then destroy window
+    """
     time.sleep(5)
     cv2.destroyAllWindows()
 
 def format_color(display_type):
+    """
+    Format colors as np array
+    :param display_type: type of pixel to represent
+    :return: np array with same info
+    """
     return np.array([ANIMATION_COLORS[display_type][0],
               ANIMATION_COLORS[display_type][1],
               ANIMATION_COLORS[display_type][2],
               255], dtype=np.uint8)
 
 def update_image(image, out):
-    bgr_image = cv2.cvtColor(image, cv2.COLOR_RGBA2BGR)
-    x = len(bgr_image[0])
-    y = len(bgr_image)
-    # scale_factor_x = 800 / x
-    # scale_factor_y = 600 / y
-    # resized = cv2.resize(bgr_image, (int(x * scale_factor_x), int(y * scale_factor_y)), interpolation=cv2.INTER_LINEAR)
-    cv2.imshow(WINDOW_NAME, bgr_image)
-    # bgr_image = cv2.cvtColor(image, cv2.COLOR_RGBA2BGR)
-    # image_np = cv2.UMat.get(bgr_image)
-    # x = len(bgr_image[0])
-    # y = len(bgr_image)
-    # scale_factor = 500000 / (len(bgr_image[0]) * len(bgr_image))
-    # resized = cv2.resize(image_np, (int(x * scale_factor), int(y * scale_factor)))
-    # cv2.imshow(WINDOW_NAME, bgr_image)
-    out.write(bgr_image)
+    """
+    Update the display and write changes to animation file
+    :param image: image to update to
+    :param out: video file writer
+    """
+    bgr_image = cv2.cvtColor(image, cv2.COLOR_RGBA2BGR)     # convert to right form
+    cv2.imshow(WINDOW_NAME, bgr_image)      # update window
+    out.write(bgr_image)        # write to video file
     key = cv2.waitKey(30)
     if key == ord('q'):  # 'q' key to quit
         exit(1)  # just exit program
@@ -82,30 +87,42 @@ def update_image(image, out):
         cv2.waitKey(-1)
 
 def update_image_path(original_image, route, start, end, out):
-    image = copy.deepcopy(original_image)
-    # change path segment colors
-    path_values = format_color("path")
+    """
+    Update when new start/target points identified
+    :param original_image: original map
+    :param route: current solution path
+    :param start: start pint of new section
+    :param end: end point of new section
+    :param out: video file writer
+    """
+    image = copy.deepcopy(original_image)           # for pass by value
+    path_values = format_color("path")              # change path segment colors
     for point in route:
-        image[point[1]][point[0]] = path_values
-    # change start point color
-    start_values = format_color("start")
+        image[point[1]][point[0]] = path_values     # change path point color
+    start_values = format_color("start")            # change start point color
     image[start[1]][start[0]] = start_values
-    # change target color
-    image[end[1]][end[0]] = start_values
-    update_image(image, out)
+    image[end[1]][end[0]] = start_values            # change target color
+    update_image(image, out)                        # update display to reflect changes
 
 def update_search(original_image, frontier, visited, route, start, end, out):
-    # update_image_path(original_image, route, poi_list)
+    """
+    Update display to reflect algorithm progress - to_visit queue and visited locations
+    :param original_image: original map
+    :param frontier: to visit node list
+    :param visited: visited node list
+    :param route: current solution route
+    :param start: start coord
+    :param end: end coord
+    :param out: video file writer
+    """
     image = copy.deepcopy(original_image)
-    # change points that were visited
     visited_values = format_color("visited")
     for point in visited:
-        image[point[1]][point[0]] = visited_values
-    # change points in frontier
+        image[point[1]][point[0]] = visited_values      # change points that were visited
     frontier_values = format_color("frontier")
     for point in frontier:
-        image[point[1]][point[0]] = frontier_values
-    update_image_path(image, route, start, end, out)
+        image[point[1]][point[0]] = frontier_values     # change points in frontier
+    update_image_path(image, route, start, end, out)    # update display
 
 def read_image(path):
     """
@@ -119,22 +136,3 @@ def read_image(path):
     except Exception as e:
         print(f"Error reading in terrain file: {e}")
         return None
-
-def save_image(im, route, directory_path):
-    """
-    Draw the ideal path on the terrain map and save in the desired location
-    :param im: numpy array of the terrain map
-    :param route: the ideal path
-    :param directory_path: directory in which to save output image
-    """
-    try:
-        image = Image.fromarray(im)
-        image = image.convert('RGB')
-        pixels = image.load()
-        for pixel in route:
-            pixels[pixel[0], pixel[1]] = ANIMATION_COLORS["path"]
-        image.save(f"{directory_path}/route.png")
-        return True
-    except Exception as e:
-        print(f"Error writing output image: {e}")
-        return False

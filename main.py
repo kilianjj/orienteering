@@ -10,6 +10,10 @@ import search_util
 import image_util
 
 def handle_cmdline_args():
+    """
+    Setup arg parser
+    :return: parser object
+    """
     parser = argparse.ArgumentParser(description="A* visualization program")
     parser.add_argument('terrain_image', help="terrain map image file")  # terrain map
     parser.add_argument('path_file', help="file with poi coordinates to visit")  # points to visit
@@ -17,7 +21,12 @@ def handle_cmdline_args():
     return parser.parse_args()
 
 def begin_animation(x, y):
-    # see if user ready for animation
+    """
+    Get directory to save animation
+    :param x: max x value of image
+    :param y: max y value of image
+    :return: video file writer
+    """
     animation_dir = get_download_directory()
     user_input = input("Hit 'q' at any time during the animation to quit and hit 'p' to pause. \n"
                        "Enter anything to begin the animation: ")
@@ -29,13 +38,13 @@ def get_download_directory():
     home_directory = os.path.expanduser("~")    # the user's home directory
     download_directory = os.path.join(home_directory, "Downloads")     # see if the Downloads directory exists
     if os.path.exists(download_directory) and os.path.isdir(download_directory):
-        print("animation will save to downloads folder")
+        print("Animation will save to downloads folder.")
         return download_directory   # if it exists and is a directory
     else:
-        print("animation will save to current directory")
+        print("Animation will save to current directory.")
         return os.getcwd()
 
-# Process the necessary files, compute ideal path and distance, draw and save modified map
+# Process the necessary files, compute paths, draw and save animation
 def main():
     # commandline args
     args = handle_cmdline_args()
@@ -53,7 +62,7 @@ def main():
         animation_out.release()
         image_util.clean_windows()
     else:
-        print("Error with algorithm arguments.")
+        print("Error with program arguments.")
 
 if __name__ == '__main__':
     main()

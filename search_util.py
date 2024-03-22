@@ -15,6 +15,7 @@ def get_route(terrain, elevations, poi_path, x, y, out):
     :param poi_path: list of POIs in the order they must be visited
     :param x: x dimension length
     :param y: y dimension length
+    :param out: animation file writer
     :return: full route (as a list of coordinate tuples) in order of those visited
     """
     if len(poi_path) < 2:
@@ -27,10 +28,10 @@ def get_route(terrain, elevations, poi_path, x, y, out):
     for i in range(len(poi_path) - 1):
         between_points, between_distance = search(poi_path[i], poi_path[i+1], terrain, elevations, route, x, y, out)
         if between_points is None:
-            # path not found
-            continue
+            continue             # path not found
         route.extend(between_points)
         total_distance += between_distance
+        # draw changes
         image_util.update_image_path(terrain, route, poi_path[i], poi_path[i+1], out)
     image_util.update_image_path(terrain, route, poi_path[0], poi_path[-1], out)
     # print(f"Total Distance: {total_distance}m")
@@ -73,6 +74,7 @@ def get_neighbors(coordinate, max_x, max_y):
     """
     neighbors = []
     rows, cols = max_y, max_x
+    # uncomment to get diagonal neighbors too
     directions = [
                   # (-1, -1),
                   (-1, 0),
@@ -115,6 +117,7 @@ def search(start, end, terrain, elevations, route, x, y, out):
     :param route: current route path between POIs
     :param x: width length
     :param y: height length
+    :param out: animation file writer
     :return: quickest (time) path from start to end accounting for terrain types
     """
     visited = set()             # set to keep track of visited nodes
@@ -126,19 +129,17 @@ def search(start, end, terrain, elevations, route, x, y, out):
     parents = {}                # dictionary for storing points and their parents (used for backtracking to get path)
     heapq.heappush(to_visit, (0, start))
     iteration = 0
-    max_animation_iterations = int(x * y / 50)
+    scale = 50
+    max_animation_iterations = int(x * y / scale)
     ratio = distance(start, end, elevations) / distance((0, 0), (x-1, y-1), elevations) * (x * y) / 100000
-    sleep.sleep(1)
+    sleep.sleep(1)  # wait a second before starting new search
     while to_visit:
-        # if x * y > 2500:
+        # update display only after quite a few iterations to speed it up
         if iteration == int(max_animation_iterations * ratio):
             iteration = 0
             image_util.update_search(terrain, animation_frontier, visited, route, start, end, out)
-        # image_util.update_search(terrain, animation_frontier, visited, route, start, end)
         else:
             iteration += 1
-        # else:
-        #     image_util.update_search(terrain, animation_frontier, visited, route, start, end)
         current = heapq.heappop(to_visit)[1]
         if current in animation_frontier:
             animation_frontier.remove(current)

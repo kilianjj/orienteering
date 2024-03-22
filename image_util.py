@@ -5,14 +5,9 @@ Author: Kilian Jakstis
 
 from PIL import Image
 import numpy as np
-import os
 import cv2
 import copy
 import time
-
-# grid sizes
-# GRID_WIDTH = 10.29
-# GRID_HEIGHT = 7.55
 
 # window constants
 WINDOW_NAME = 'A* Visualization'
@@ -42,9 +37,17 @@ TERRAIN_TYPES = {
     (0, 0, 255): 1000      # WATER
 }
 
-def init_window(x, y):
+def init_window(x, y, directory):
     cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(WINDOW_NAME, x if x < MAX_WINDOW_X else MAX_WINDOW_X, y if y < MAX_WINDOW_Y else MAX_WINDOW_Y)
+    # scale_factor_x = 800 / x
+    # scale_factor_y = 800 / y
+    # alter fps with example rn
+    fps = 10
+    # cv2.resizeWindow(WINDOW_NAME, int(x * scale_factor_x) if x * scale_factor_x < MAX_WINDOW_X else MAX_WINDOW_X,
+    #                  int(y * scale_factor_y) if y * scale_factor_y < MAX_WINDOW_Y else MAX_WINDOW_Y)
+    cv2.resizeWindow(WINDOW_NAME, x if x < MAX_WINDOW_X else MAX_WINDOW_X,
+                     y if y < MAX_WINDOW_Y else MAX_WINDOW_Y)
+    return cv2.VideoWriter(f"{directory}/animation.avi", cv2.VideoWriter_fourcc(*'MJPG'), int(fps * (1 / x * y)), (x, y))
 
 def clean_windows():
     time.sleep(5)
@@ -56,16 +59,29 @@ def format_color(display_type):
               ANIMATION_COLORS[display_type][2],
               255], dtype=np.uint8)
 
-def update_image(image):
+def update_image(image, out):
     bgr_image = cv2.cvtColor(image, cv2.COLOR_RGBA2BGR)
+    x = len(bgr_image[0])
+    y = len(bgr_image)
+    # scale_factor_x = 800 / x
+    # scale_factor_y = 600 / y
+    # resized = cv2.resize(bgr_image, (int(x * scale_factor_x), int(y * scale_factor_y)), interpolation=cv2.INTER_LINEAR)
     cv2.imshow(WINDOW_NAME, bgr_image)
+    # bgr_image = cv2.cvtColor(image, cv2.COLOR_RGBA2BGR)
+    # image_np = cv2.UMat.get(bgr_image)
+    # x = len(bgr_image[0])
+    # y = len(bgr_image)
+    # scale_factor = 500000 / (len(bgr_image[0]) * len(bgr_image))
+    # resized = cv2.resize(image_np, (int(x * scale_factor), int(y * scale_factor)))
+    # cv2.imshow(WINDOW_NAME, bgr_image)
+    out.write(bgr_image)
     key = cv2.waitKey(30)
     if key == ord('q'):  # 'q' key to quit
         exit(1)  # just exit program
     elif key == ord('p'):  # 'p' key to pause
         cv2.waitKey(-1)
 
-def update_image_path(original_image, route, start, end):
+def update_image_path(original_image, route, start, end, out):
     image = copy.deepcopy(original_image)
     # change path segment colors
     path_values = format_color("path")
@@ -76,9 +92,9 @@ def update_image_path(original_image, route, start, end):
     image[start[1]][start[0]] = start_values
     # change target color
     image[end[1]][end[0]] = start_values
-    update_image(image)
+    update_image(image, out)
 
-def update_search(original_image, frontier, visited, route, start, end):
+def update_search(original_image, frontier, visited, route, start, end, out):
     # update_image_path(original_image, route, poi_list)
     image = copy.deepcopy(original_image)
     # change points that were visited
@@ -89,7 +105,7 @@ def update_search(original_image, frontier, visited, route, start, end):
     frontier_values = format_color("frontier")
     for point in frontier:
         image[point[1]][point[0]] = frontier_values
-    update_image_path(image, route, start, end)
+    update_image_path(image, route, start, end, out)
 
 def read_image(path):
     """
@@ -122,52 +138,3 @@ def save_image(im, route, directory_path):
     except Exception as e:
         print(f"Error writing output image: {e}")
         return False
-
-# for testing - just opens the image
-# def save_image(im, route, output_path):
-#     """
-#     Draw the ideal path on the terrain map and show image
-#     :param im: numpy array of the terrain map
-#     :param route: the ideal path (currently in tuples of coordinates***)
-#     :param output_path: path at which to save output image
-#     """
-#     try:
-#         image = Image.fromarray(im)
-#         image = image.convert('RGB')
-#         pixels = image.load()
-#         for pixel in route:
-#             pixels[pixel[0], pixel[1]] = ANIMATION_COLORS["path"]
-#         image.show()
-#     except Exception as e:
-#         print(f"Error writing output image: {e}")
-
-def get_download_directory():
-    home_directory = os.path.expanduser("~")    # the user's home directory
-    download_directory = os.path.join(home_directory, "Downloads")     # see if the Downloads directory exists
-    if os.path.exists(download_directory) and os.path.isdir(download_directory):
-        return download_directory   # if it exists and is a directory
-    else:
-        return None
-
-# # Define the dimensions and frame rate of the video
-# width = 640
-# height = 480
-# fps = 30
-#
-# # Create a VideoWriter object
-# fourcc = cv2.VideoWriter_fourcc(*'XVID')
-# out = cv2.VideoWriter('animation.avi', fourcc, fps, (width, height))
-#
-# # Create your animation frames
-# for i in range(100):
-#     # Create a blank frame
-#     frame = np.zeros((height, width, 3), dtype=np.uint8)
-#
-#     # Draw something on the frame (replace this with your animation)
-#     cv2.putText(frame, f"Frame {i}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-#
-#     # Write the frame to the video file
-#     out.write(frame)
-#
-# # Release the VideoWriter object
-# out.release()

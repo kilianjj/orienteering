@@ -5,7 +5,6 @@ Author: Kilian Jakstis
 
 import argparse
 import os
-import time
 import file_util
 import search_util
 import image_util
@@ -19,22 +18,22 @@ def handle_cmdline_args():
 
 def begin_animation(x, y):
     # see if user ready for animation
+    animation_dir = get_download_directory()
     user_input = input("Hit 'q' at any time during the animation to quit and hit 'p' to pause. \n"
                        "Enter anything to begin the animation: ")
     if user_input.strip() == "q":
         return
-    image_util.init_window(x, y)
+    return image_util.init_window(x, y, animation_dir)
 
-def after_alg(t_map, route):
-    user_input = input("Enter 'y' to save output path image or anything else to terminate: ")
-    if user_input.strip() == "y":
-        download_dir = image_util.get_download_directory()
-        if download_dir:
-            if image_util.save_image(t_map, route, download_dir):
-                print("Route image saved to user downloads: ", download_dir)
-        else:
-            if image_util.save_image(t_map, route, os.getcwd()):
-                print("Route image saved to this directory: ", download_dir)
+def get_download_directory():
+    home_directory = os.path.expanduser("~")    # the user's home directory
+    download_directory = os.path.join(home_directory, "Downloads")     # see if the Downloads directory exists
+    if os.path.exists(download_directory) and os.path.isdir(download_directory):
+        print("animation will save to downloads folder")
+        return download_directory   # if it exists and is a directory
+    else:
+        print("animation will save to current directory")
+        return os.getcwd()
 
 # Process the necessary files, compute ideal path and distance, draw and save modified map
 def main():
@@ -47,14 +46,12 @@ def main():
     max_x = map_array.shape[1]
     max_y = map_array.shape[0]
     if poi_path is not None and elevations is not None and map_array is not None:
-        begin_animation(max_x, max_y)
+        animation_out = begin_animation(max_x, max_y)
         # compute the path and print distance
-        route = search_util.get_route(map_array, elevations, poi_path, max_x, max_y)
+        # route = search_util.get_route(map_array, elevations, poi_path, max_x, max_y, animation_out)
+        search_util.get_route(map_array, elevations, poi_path, max_x, max_y, animation_out)
+        animation_out.release()
         image_util.clean_windows()
-        if route:
-            after_alg(map_array, route)
-        else:
-            print("No path found.")
     else:
         print("Error with algorithm arguments.")
 

@@ -7,7 +7,7 @@ import heapq
 import image_util
 import time as sleep
 
-def get_route(terrain, elevations, poi_path, x, y):
+def get_route(terrain, elevations, poi_path, x, y, out):
     """
     Get the full route by constructing smaller routes between pairs of points in the specified order
     :param terrain: RGB array of terrain image
@@ -20,19 +20,19 @@ def get_route(terrain, elevations, poi_path, x, y):
     if len(poi_path) < 2:
         # only 1 point - no target
         return
-    image_util.update_image(terrain)
+    image_util.update_image(terrain, out)
     sleep.sleep(3)
     total_distance = 0
     route = []
     for i in range(len(poi_path) - 1):
-        between_points, between_distance = search(poi_path[i], poi_path[i+1], terrain, elevations, route, x, y)
+        between_points, between_distance = search(poi_path[i], poi_path[i+1], terrain, elevations, route, x, y, out)
         if between_points is None:
             # path not found
             continue
         route.extend(between_points)
         total_distance += between_distance
-        image_util.update_image_path(terrain, route, poi_path[i], poi_path[i+1])
-    image_util.update_image_path(terrain, route, poi_path[0], poi_path[-1])
+        image_util.update_image_path(terrain, route, poi_path[i], poi_path[i+1], out)
+    image_util.update_image_path(terrain, route, poi_path[0], poi_path[-1], out)
     # print(f"Total Distance: {total_distance}m")
     return route
 
@@ -105,7 +105,7 @@ def construct_path(visited_nodes, start, end):
     path.append(start)
     return path[::-1]
 
-def search(start, end, terrain, elevations, route, x, y):
+def search(start, end, terrain, elevations, route, x, y, out):
     """
     A* search algorithm
     :param start: start point
@@ -126,14 +126,14 @@ def search(start, end, terrain, elevations, route, x, y):
     parents = {}                # dictionary for storing points and their parents (used for backtracking to get path)
     heapq.heappush(to_visit, (0, start))
     iteration = 0
-    max_animation_iterations = int(x * y / 20)
+    max_animation_iterations = int(x * y / 50)
     ratio = distance(start, end, elevations) / distance((0, 0), (x-1, y-1), elevations) * (x * y) / 100000
     sleep.sleep(1)
     while to_visit:
         # if x * y > 2500:
         if iteration == int(max_animation_iterations * ratio):
             iteration = 0
-            image_util.update_search(terrain, animation_frontier, visited, route, start, end)
+            image_util.update_search(terrain, animation_frontier, visited, route, start, end, out)
         # image_util.update_search(terrain, animation_frontier, visited, route, start, end)
         else:
             iteration += 1

@@ -1,7 +1,7 @@
-# Orienteering Path Planning
-Use A* algorithm on terrain data to plan fastest route between POIs. Also provides visualization of the algorithm. 
+## Orienteering Path Planning
+Solves for the shortest path, in terms of time, between two points in an area with terrains having different difficulty/speeds associated with them. 
 
-## Features:
+Provides a visualization of the algorithm running.
 
 ## Examples:
 Constant terrain type with obstacles: 
